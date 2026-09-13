@@ -1254,6 +1254,7 @@ export class ButterflyEngine {
 
     const b = this.cfg.biome;
     this.drawSky(ctx, b);
+    this.drawDepthBackdrop(ctx, b);
     ctx.save();
     ctx.translate(-this.camX * 0.12 + sx * 0.2, -this.camY * 0.05);
     this.drawClouds(ctx, b);
@@ -1300,9 +1301,9 @@ export class ButterflyEngine {
     ctx.fillRect(0, 0, W, H);
     // خلفية ثلاثية الأبعاد مولّدة: طبقة بعيدة مع حركة parallax تمنح المراحل عمقاً سينمائياً
     const bg = this.opts.sprites.background;
-    if (bg && (b.id === 'sky' || b.id === 'cosmos' || this.cfg.level >= 41)) {
+    if (bg) {
       ctx.save();
-      ctx.globalAlpha = b.id === 'cosmos' ? 0.22 : 0.38;
+      ctx.globalAlpha = b.id === 'cosmos' ? 0.16 : b.id === 'volcano' ? 0.12 : 0.22;
       const bx = -((this.camX * 0.08) % W);
       ctx.drawImage(bg, bx - 80, 30, W + 160, H - 20);
       ctx.drawImage(bg, bx + W - 80, 30, W + 160, H - 20);
@@ -1338,6 +1339,66 @@ export class ButterflyEngine {
       }
       ctx.globalAlpha = 1;
     }
+  }
+
+  private drawDepthBackdrop(ctx: CanvasRenderingContext2D, b: LevelConfig['biome']) {
+    // طبقات منظور متحركة: خطوط أفقية وكتل بعيدة تمنح كل عالم عمقاً ثلاثي الأبعاد.
+    const t = this.timeMs / 1000;
+    const palette: Record<string, [string, string, string]> = {
+      meadow: ['rgba(48,120,86,.24)', 'rgba(30,82,70,.38)', 'rgba(12,38,46,.42)'],
+      sunset: ['rgba(155,91,118,.28)', 'rgba(78,52,92,.42)', 'rgba(28,24,52,.46)'],
+      neon: ['rgba(24,87,112,.34)', 'rgba(11,39,77,.54)', 'rgba(5,12,36,.62)'],
+      volcano: ['rgba(163,56,26,.28)', 'rgba(70,22,25,.46)', 'rgba(22,8,18,.58)'],
+      sky: ['rgba(78,148,159,.24)', 'rgba(40,95,115,.36)', 'rgba(12,43,70,.42)'],
+      cosmos: ['rgba(95,54,150,.34)', 'rgba(38,18,80,.52)', 'rgba(8,5,30,.66)'],
+    };
+    const [far, mid, near] = palette[b.id] ?? palette.meadow;
+    const parallax = this.camX * 0.16;
+
+    ctx.save();
+    // كتل صخرية/جزر بعيدة بتدرج حجمي وشفافية جوية
+    for (let i = -2; i < 9; i++) {
+      const x = i * 210 - (parallax % 210);
+      const drift = Math.sin(t * 0.18 + i) * 7;
+      ctx.fillStyle = far;
+      ctx.beginPath();
+      ctx.moveTo(x - 150, 360 + drift);
+      ctx.lineTo(x - 92, 292 + drift);
+      ctx.lineTo(x - 12, 326 + drift);
+      ctx.lineTo(x + 52, 270 + drift);
+      ctx.lineTo(x + 150, 360 + drift);
+      ctx.closePath(); ctx.fill();
+    }
+    for (let i = -1; i < 8; i++) {
+      const x = i * 260 - (parallax * 1.6 % 260);
+      const y = 408 + Math.sin(t * 0.25 + i * 1.7) * 9;
+      ctx.fillStyle = mid;
+      ctx.beginPath();
+      ctx.moveTo(x - 170, y); ctx.lineTo(x - 96, y - 66);
+      ctx.lineTo(x - 28, y - 28); ctx.lineTo(x + 40, y - 96);
+      ctx.lineTo(x + 168, y); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = near;
+      ctx.beginPath();
+      ctx.moveTo(x - 76, y); ctx.lineTo(x, y + 78); ctx.lineTo(x + 78, y); ctx.closePath(); ctx.fill();
+    }
+    // شبكة منظور أرضية؛ تظل خلف المسار وتبيع إحساس الكاميرا ثلاثية الأبعاد.
+    ctx.globalAlpha = 0.42;
+    ctx.strokeStyle = b.id === 'volcano' ? '#ff9f43' : b.id === 'neon' || b.id === 'cosmos' ? '#67e8f9' : '#d8f3ff';
+    ctx.lineWidth = 1;
+    for (let i = -8; i <= 8; i++) {
+      const x = W / 2 + i * 82 - (this.camX * 0.22 % 82);
+      ctx.beginPath(); ctx.moveTo(W / 2 + (x - W / 2) * 0.12, 360); ctx.lineTo(x, GROUND_TOP + 8); ctx.stroke();
+    }
+    for (let i = 0; i < 8; i++) {
+      const y = 372 + i * i * 4.7 + ((t * 12) % 12);
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // ضباب حجمي عند الأفق لتثبيت الطبقات بصرياً.
+    const fog = ctx.createLinearGradient(0, 250, 0, GROUND_TOP);
+    fog.addColorStop(0, 'rgba(255,255,255,0)'); fog.addColorStop(1, b.fog);
+    ctx.fillStyle = fog; ctx.fillRect(0, 230, W, GROUND_TOP - 210);
+    ctx.restore();
   }
 
   private drawClouds(ctx: CanvasRenderingContext2D, b: LevelConfig['biome']) {
@@ -2022,6 +2083,38 @@ export class ButterflyEngine {
       ctx.fill();
       ctx.restore();
     }
+  }
+
+  private drawPlayerBodyMotion(ctx: CanvasRenderingContext2D, dead: boolean) {
+    // طبقة أداء جسدي فوق السبرايت: القدمين والركبتين والذراعان والكتف والسلاح تستجيب للحركة.
+    const walk = this.onGround ? Math.sin(this.runPhase) : 0;
+    const stride = this.onGround ? Math.min(1, Math.abs(this.vx) / MOVE_SPEED) : 0;
+    const air = !this.onGround;
+    const recoil = this.muzzle > 0 ? Math.min(1, this.muzzle * 8) : 0;
+    const crouch = this.crouch ? 10 : 0;
+    ctx.save();
+    ctx.globalAlpha = dead ? 0.28 : 0.48;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 5;
+    const limb = ctx.createLinearGradient(-28, -10, 28, 35);
+    limb.addColorStop(0, '#f4c28b'); limb.addColorStop(0.35, '#8b5a32'); limb.addColorStop(1, '#3b241b');
+    ctx.strokeStyle = limb; ctx.lineWidth = 6;
+    // الرجلان: دورة خطوة مع امتداد مختلف لكل جانب.
+    const leftKnee = { x: -15 + walk * 9 * stride, y: 18 + crouch };
+    const rightKnee = { x: 13 - walk * 9 * stride, y: 19 + crouch };
+    ctx.beginPath(); ctx.moveTo(-9, 3 + crouch); ctx.lineTo(leftKnee.x, leftKnee.y); ctx.lineTo(-24 - walk * 8, 39 + crouch); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(9, 4 + crouch); ctx.lineTo(rightKnee.x, rightKnee.y); ctx.lineTo(24 + walk * 8, 39 + crouch); ctx.stroke();
+    // الذراعان والكتف: يوازنان الجذع ويستجيبان لارتداد السلاح.
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(-24, -24); ctx.lineTo(-37 - walk * 5, -7 + crouch * .3); ctx.lineTo(-28 - walk * 8, 8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(24, -24); ctx.lineTo(34 + recoil * 5, -9); ctx.lineTo(47 + recoil * 8, -14); ctx.stroke();
+    ctx.strokeStyle = '#c9893e'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(24, -18); ctx.lineTo(45 + recoil * 8, -14); ctx.stroke();
+    // وشاح/حزام متطاير وحركة حقيبة الظهر مع السرعة.
+    ctx.strokeStyle = 'rgba(245,197,24,.8)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-24, -25); ctx.quadraticCurveTo(-42 - stride * 12, -18 + walk * 5, -55 - stride * 16, -31 - walk * 4); ctx.stroke();
+    ctx.restore();
   }
 
   private drawEnemyBullets(ctx: CanvasRenderingContext2D) {
