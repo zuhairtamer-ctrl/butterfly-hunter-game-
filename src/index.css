@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+:root {
+  --gold: #f5c518;
+  --amber-deep: #b45309;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: "Cairo", "Tajawal", system-ui, sans-serif;
+  background: #070b16;
+  color: #fff;
+  overflow-x: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.font-display {
+  font-family: "Cairo", sans-serif;
+}
+
+/* ---------- custom scrollbar ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0b1020; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #f59e0b, #b45309); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #fbbf24; }
+
+/* ---------- animations ---------- */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-14px) rotate(2deg); }
+}
+@keyframes flutter {
+  0%, 100% { transform: scaleX(1) rotate(-4deg); }
+  50% { transform: scaleX(0.55) rotate(4deg); }
+}
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(245, 197, 24, 0.7)); }
+  50% { filter: drop-shadow(0 0 22px rgba(245, 197, 24, 1)); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.7); }
+  70% { transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes drift-cloud {
+  from { transform: translateX(-15%); }
+  to { transform: translateX(115%); }
+}
+@keyframes sparkle-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.12); }
+  50% { transform: scale(1); }
+}
+
+.anim-floaty { animation: floaty 5s ease-in-out infinite; }
+.anim-rise { animation: rise-in 0.5s ease both; }
+.anim-pop { animation: pop-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+
+.text-shimmer {
+  background: linear-gradient(110deg, #fde68a 20%, #f59e0b 40%, #fff7ed 50%, #f59e0b 60%, #fde68a 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 3.5s linear infinite;
+}
+
+.panel-glass {
+  background: linear-gradient(160deg, rgba(17, 24, 43, 0.92), rgba(8, 12, 26, 0.94));
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(245, 197, 24, 0.22);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.btn-brass {
+  background: linear-gradient(180deg, #fbbf24, #d97706 55%, #92400e);
+  color: #1c1005;
+  box-shadow: 0 6px 0 #78350f, 0 12px 28px rgba(217, 119, 6, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+.btn-brass:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-brass:active { transform: translateY(4px); box-shadow: 0 2px 0 #78350f, 0 6px 16px rgba(217,119,6,.4); }
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: all 0.15s ease;
+}
+.btn-ghost:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(245, 197, 24, 0.5); }
+
+canvas.game-canvas {
+  cursor: none;
+  touch-action: none;
+  image-rendering: auto;
+}
+
+/* level cards */
+.level-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.level-card:not(.locked):hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 14px 40px rgba(245, 197, 24, 0.35);
+  border-color: rgba(245, 197, 24, 0.7);
+}
+
+/* health bar shimmer */
+.hp-fill {
+  transition: width 0.35s ease;
+}
+
+/* touch buttons */
+.touch-btn {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
