@@ -386,7 +386,7 @@ function Armory({ save, updateSave, go }: { save: SaveData; updateSave: (p: Part
 
 /* ================= كيف تلعب ================= */
 function HowToPlay({ sprites, go }: { sprites: SpriteSet; go: (s: Screen) => void }) {
-  const kinds = (['pink', 'azure', 'violet', 'gold', 'inferno', 'boss'] as const);
+  const kinds = (['pink', 'azure', 'violet', 'gold', 'inferno', 'void', 'boss'] as const);
   const kindSprite: Record<string, string | undefined> = {
     pink: sprites.urls.pink, azure: sprites.urls.blue, violet: sprites.urls.pink,
     gold: sprites.urls.blue, inferno: sprites.urls.inferno || sprites.urls.fire, void: sprites.urls.void, boss: sprites.urls.inferno || sprites.urls.fire,
@@ -456,7 +456,7 @@ function HowToPlay({ sprites, go }: { sprites: SpriteSet; go: (s: Screen) => voi
                       src={kindSprite[k]}
                       alt={d.name}
                       className="h-16 w-20 shrink-0 object-contain"
-                      style={k === 'violet' ? { filter: 'hue-rotate(-45deg) saturate(1.6)' } : k === 'gold' ? { filter: 'hue-rotate(150deg) saturate(2)' } : undefined}
+                      style={k === 'violet' ? { filter: 'hue-rotate(-45deg) saturate(1.6)' } : k === 'gold' ? { filter: 'hue-rotate(150deg) saturate(2)' } : k === 'void' ? { filter: 'saturate(1.4) contrast(1.1)' } : undefined}
                     />
                   ) : <Bug className="h-10 w-10 text-pink-300" />}
                   <div className="text-xs">
