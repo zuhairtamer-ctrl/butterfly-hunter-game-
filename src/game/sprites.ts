@@ -5,6 +5,9 @@ export interface SpriteSet {
   blue: HTMLCanvasElement | null;
   pink: HTMLCanvasElement | null;
   fire: HTMLCanvasElement | null;
+  inferno: HTMLCanvasElement | null;
+  void: HTMLCanvasElement | null;
+  background: HTMLCanvasElement | null;
   spikes: HTMLCanvasElement | null;
   chest: HTMLCanvasElement | null;
   urls: Record<string, string>; // dataURL للعرض في الواجهة
@@ -93,6 +96,9 @@ export async function loadSprites(): Promise<SpriteSet> {
     blue: 'sprites/butterfly-blue.png',
     pink: 'sprites/butterfly-pink.png',
     fire: 'sprites/butterfly-fire.png',
+    inferno: 'sprites/butterfly-inferno-hd.png',
+    void: 'sprites/butterfly-void-hd.png',
+    background: 'backgrounds/sky-temple-3d.png',
     spikes: 'sprites/spikes.png',
     chest: 'sprites/chest.png',
   };
@@ -106,7 +112,7 @@ export async function loadSprites(): Promise<SpriteSet> {
           try { img = await loadImage(p); break; } catch { /* التالي */ }
         }
         if (!img) return [key, null] as const;
-        const keyed = trimCanvas(chromaKey(img as HTMLImageElement));
+        const keyed = key === 'background' ? (() => { const c = document.createElement('canvas'); c.width = img!.naturalWidth || img!.width; c.height = img!.naturalHeight || img!.height; c.getContext('2d')?.drawImage(img!, 0, 0, c.width, c.height); return c; })() : trimCanvas(chromaKey(img as HTMLImageElement));
         return [key, keyed] as const;
       } catch {
         return [key, null] as const;
@@ -125,5 +131,5 @@ export async function loadSprites(): Promise<SpriteSet> {
 }
 
 export function emptySprites(): SpriteSet {
-  return { hunter: null, blue: null, pink: null, fire: null, spikes: null, chest: null, urls: {} };
+  return { hunter: null, blue: null, pink: null, fire: null, inferno: null, void: null, background: null, spikes: null, chest: null, urls: {} };
 }

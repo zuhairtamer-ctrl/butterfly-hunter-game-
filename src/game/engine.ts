@@ -108,6 +108,8 @@ export class ButterflyEngine {
   private dmgFlash = 0;
   private winT = 0;
   private bossWarned = false;
+  private playerTilt = 0;
+  private screenPulse = 0;
 
   // نتيجة
   private score = 0;
@@ -792,7 +794,7 @@ export class ButterflyEngine {
     for (const e of this.enemies) {
       if (e.dead) continue;
       if (e.flash > 0) e.flash -= dt;
-      e.wing += dt * (e.kind === 'violet' ? 22 : e.kind === 'boss' ? 7 : 13);
+      e.wing += dt * (e.kind === 'violet' ? 22 : e.kind === 'void' ? 26 : e.kind === 'boss' ? 7 : 13);
 
       // التفعيل عند الاقتراب
       if (!e.active) {
@@ -861,6 +863,22 @@ export class ButterflyEngine {
           }
           break;
         }
+        case 'void': {
+          const orbit = angToPlayer + Math.sin(this.timeMs / 370 + e.seed) * 1.4;
+          const targetX = px + Math.cos(orbit) * 260;
+          const targetY = py + Math.sin(orbit) * 130;
+          steer(targetX, targetY, sp, 5.5);
+          if (e.tState <= 0 && d < 680) {
+            e.state = 'dive'; e.tState = 0.52; e.tx = px; e.ty = py;
+            this.burst(e.x, e.y, 14, '#8b5cf6', 280, 0.45, 4);
+            this.opts.audio.warning();
+          }
+          if (e.state === 'dive') {
+            const a = Math.atan2(e.ty - e.y, e.tx - e.x); e.vx = Math.cos(a) * sp * 3.8; e.vy = Math.sin(a) * sp * 3.8;
+            if (e.tState <= 0) { e.state = 'patrol'; e.tState = rand(1.4, 2.8); }
+          }
+          break;
+        }
         case 'inferno':
         case 'boss': {
           const wantX = px + (e.x < px ? -1 : 1) * (e.kind === 'boss' ? 430 : 380);
@@ -926,7 +944,7 @@ export class ButterflyEngine {
 
       // الارتطام بالصياد = -10 من الروح
       const pr = this.crouch ? 30 : 36;
-      const er = (e.kind === 'boss' ? 66 : e.kind === 'gold' ? 44 : 32) * (0.8 + e.scale * 0.4);
+      const er = (e.kind === 'boss' ? 66 : e.kind === 'void' ? 48 : e.kind === 'gold' ? 44 : 32) * (0.8 + e.scale * 0.4);
       if (dist(e.x, e.y, px, py) < pr + er && this.invuln <= 0 && this.health > 0) {
         const defName = ENEMY_DEFS[e.kind].name;
         this.damage(10, defName);
@@ -988,6 +1006,7 @@ export class ButterflyEngine {
       violet: ['#c084fc', '#f0abfc', '#ffffff'],
       gold: ['#f5c518', '#fbbf24', '#fff7cc'],
       inferno: ['#ff6b35', '#ffb347', '#7a1f12'],
+      void: ['#8b5cf6', '#22d3ee', '#ffffff'],
       boss: ['#ff3b3b', '#ffb347', '#ffffff'],
     };
     const cols = colors[e.kind];
@@ -1279,6 +1298,16 @@ export class ButterflyEngine {
     g.addColorStop(1, b.skyBottom);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
+    // خلفية ثلاثية الأبعاد مولّدة: طبقة بعيدة مع حركة parallax تمنح المراحل عمقاً سينمائياً
+    const bg = this.opts.sprites.background;
+    if (bg && (b.id === 'sky' || b.id === 'cosmos' || this.cfg.level >= 41)) {
+      ctx.save();
+      ctx.globalAlpha = b.id === 'cosmos' ? 0.22 : 0.38;
+      const bx = -((this.camX * 0.08) % W);
+      ctx.drawImage(bg, bx - 80, 30, W + 160, H - 20);
+      ctx.drawImage(bg, bx + W - 80, 30, W + 160, H - 20);
+      ctx.restore();
+    }
     // الشمس / القمر
     const sunX = W * 0.78 - this.camX * 0.03;
     const sunY = b.night ? 130 : 150;
@@ -1739,9 +1768,12 @@ export class ButterflyEngine {
         ctx.setLineDash([]);
       }
 
-      const spr = e.kind === 'pink' || e.kind === 'violet' ? this.opts.sprites.pink
-        : e.kind === 'azure' || e.kind === 'gold' ? this.opts.sprites.blue
-          : this.opts.sprites.fire;
+      const spr = e.kind === 'void' ? this.opts.sprites.void
+        : e.kind === 'boss' ? this.opts.sprites.inferno
+        : e.kind === 'inferno' ? this.opts.sprites.inferno || this.opts.sprites.fire
+        : e.kind === 'pink' || e.kind === 'violet' ? this.opts.sprites.pink
+          : e.kind === 'azure' || e.kind === 'gold' ? this.opts.sprites.blue
+            : this.opts.sprites.fire;
 
       const baseW = 150 * e.scale;
       const baseH = 120 * e.scale;
@@ -1759,11 +1791,15 @@ export class ButterflyEngine {
       } else if (e.kind === 'inferno') {
         ctx.shadowColor = 'rgba(255,140,40,0.7)';
         ctx.shadowBlur = 20;
+      } else if (e.kind === 'void') {
+        ctx.shadowColor = 'rgba(139,92,246,0.95)';
+        ctx.shadowBlur = 32;
       }
       // فلتر اللون للأنواع المشتقة + وميض الإصابة
       let filter = '';
       if (e.kind === 'violet') filter = 'hue-rotate(-45deg) saturate(1.6)';
       else if (e.kind === 'gold') filter = 'hue-rotate(150deg) saturate(2) brightness(1.15)';
+      else if (e.kind === 'void') filter = 'saturate(1.5) contrast(1.15)';
       if (e.flash > 0) filter += ' brightness(2.6)';
       if (e.state === 'aim') filter += ' saturate(2) brightness(1.3)';
       if (filter) (ctx as unknown as { filter: string }).filter = filter;
@@ -1823,7 +1859,7 @@ export class ButterflyEngine {
     const cols: Record<EnemyKind, [string, string]> = {
       pink: ['#f472b6', '#f0abfc'], azure: ['#22d3ee', '#3b82f6'],
       violet: ['#a855f7', '#e879f9'], gold: ['#f59e0b', '#fde047'],
-      inferno: ['#ef4444', '#f97316'], boss: ['#dc2626', '#fb923c'],
+      inferno: ['#ef4444', '#f97316'], void: ['#8b5cf6', '#22d3ee'], boss: ['#dc2626', '#fb923c'],
     };
     const [c1, c2] = cols[kind];
     for (const side of [-1, 1]) {
@@ -1890,6 +1926,8 @@ export class ButterflyEngine {
     // حركة تنفّس أثناء الثبات (idle)
     const idleBob = (!this.onGround || Math.abs(this.vx) < 30) ? Math.sin(this.timeMs / 700) * 1.5 : 0;
     const runBob = this.onGround && Math.abs(this.vx) > 40 ? Math.abs(Math.sin(this.runPhase)) * -7 : idleBob;
+    this.playerTilt += (((this.vx / MOVE_SPEED) * 0.12 + (this.vy / 2200) * 0.08) - this.playerTilt) * 0.18;
+    const landingSquash = this.onGround && Math.abs(this.vy) < 40 ? 1 + Math.abs(Math.sin(this.timeMs / 80)) * 0.025 : 1;
     const airTilt = !this.onGround ? clamp(this.vy * 0.00012, -0.18, 0.22) : 0;
     // ضغط للجسم عند الانحناء (يبدو أكثر انضغاطاً)
     const crouchSquash = this.crouch && this.onGround ? { sx: 1.08, sy: 0.85 } : { sx: 1, sy: 1 };
@@ -1899,8 +1937,8 @@ export class ButterflyEngine {
 
     ctx.save();
     ctx.translate(this.px, this.py - hgt / 2 + 6 + runBob);
-    ctx.rotate(dead ? -1.2 * this.facing : airTilt * this.facing);
-    ctx.scale(this.facing * crouchSquash.sx, crouchSquash.sy);
+    ctx.rotate(dead ? -1.2 * this.facing : (airTilt + this.playerTilt) * this.facing);
+    ctx.scale(this.facing * crouchSquash.sx * landingSquash, crouchSquash.sy / landingSquash);
     // توهج خفيف حول الصياد (يتغير لونه حسب الصحة والحالة)
     if (this.health > 30) ctx.shadowColor = 'rgba(255,240,200,0.5)';
     else ctx.shadowColor = 'rgba(255,80,80,0.8)';

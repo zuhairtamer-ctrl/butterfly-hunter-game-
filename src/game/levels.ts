@@ -110,7 +110,8 @@ export function biomeForLevel(level: number): BiomeDef {
 function pickKind(rng: () => number, level: number): EnemyKind {
   const roll = rng();
   // تُفتح الأنواع الأقوى تدريجياً
-  if (level >= 28 && roll < 0.14) return 'inferno';
+  if (level >= 36 && roll < 0.16) return 'void';
+  if (level >= 28 && roll < 0.30) return 'inferno';
   if (level >= 18 && roll < 0.30) return 'gold';
   if (level >= 12 && roll < 0.48) return 'violet';
   if (level >= 5 && roll < 0.68) return 'azure';
@@ -250,5 +251,6 @@ export const ENEMY_DEFS: Record<EnemyKind, { hp: number; speed: number; damage: 
   violet: { hp: 2, speed: 265, damage: 10, score: 200, name: 'البنفسجية الخاطفة', desc: 'الأسرع بين الأسراب، تهاجم بشكل متعرّج.', scale: 0.5 },
   gold: { hp: 5, speed: 95, damage: 10, score: 350, name: 'الذهبية المدرّعة', desc: 'دبّابة طائرة بطيئة لكنها تتحمّل الكثير.', scale: 0.85 },
   inferno: { hp: 7, speed: 140, damage: 10, score: 600, name: 'شيطان اللهب', desc: 'تقذف كرات نارية من أجنحتها الملتهبة.', scale: 0.95 },
+  void: { hp: 10, speed: 190, damage: 14, score: 900, name: 'مفترسة الفراغ', desc: 'تختفي لحظة ثم تنقضّ باندفاع كهربائي.', scale: 1.08 },
   boss: { hp: 34, speed: 120, damage: 10, score: 2500, name: 'ملك الفراشات', desc: 'الزعيم الأعظم: قذائف نارية واستدعاء للأسراب.', scale: 1.55 },
 };

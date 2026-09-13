@@ -342,6 +342,7 @@ function Armory({ save, updateSave, go }: { save: SaveData; updateSave: (p: Part
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
+            <div className="hidden rounded-xl border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-center sm:block"><div className="text-[10px] text-cyan-200/70">التحدي</div><div className="text-xs font-black text-cyan-100">سلسلة بلا توقف</div></div>
                       <h3 className="text-lg font-black">{w.name}</h3>
                       {selected && <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[11px] font-bold text-amber-300">مُجهّز ✓</span>}
                     </div>
@@ -388,7 +389,7 @@ function HowToPlay({ sprites, go }: { sprites: SpriteSet; go: (s: Screen) => voi
   const kinds = (['pink', 'azure', 'violet', 'gold', 'inferno', 'boss'] as const);
   const kindSprite: Record<string, string | undefined> = {
     pink: sprites.urls.pink, azure: sprites.urls.blue, violet: sprites.urls.pink,
-    gold: sprites.urls.blue, inferno: sprites.urls.fire, boss: sprites.urls.fire,
+    gold: sprites.urls.blue, inferno: sprites.urls.inferno || sprites.urls.fire, void: sprites.urls.void, boss: sprites.urls.inferno || sprites.urls.fire,
   };
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b1a30] via-[#070b16] to-[#070b16] p-4 md:p-8">
@@ -692,6 +693,9 @@ function GameScreen({ level, sprites, save, updateSave, go, startLevel, toggleMu
             );
           })}
           <span className="mr-auto hidden items-center gap-1 text-[11px] text-white/40 lg:flex">
+            <Sparkles className="h-3.5 w-3.5 text-cyan-300" /> حافظ على الكومبو لزيادة النقاط
+          </span>
+          <span className="hidden items-center gap-1 text-[11px] text-white/40 lg:flex">
             <MousePointer2 className="h-3.5 w-3.5" /> صوّب بالفأرة وانقر للإطلاق
           </span>
         </div>

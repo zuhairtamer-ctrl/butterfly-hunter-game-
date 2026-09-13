@@ -23,7 +23,7 @@ export interface BiomeDef {
   night?: boolean;
 }
 
-export type EnemyKind = 'pink' | 'azure' | 'violet' | 'gold' | 'inferno' | 'boss';
+export type EnemyKind = 'pink' | 'azure' | 'violet' | 'gold' | 'inferno' | 'void' | 'boss';
 
 // مستوى قوة الفراشة: 1 ضعيف → 5 زعيم. يظهر تدريجياً كلما زادت المرحلة
 export type EnemyTier = 1 | 2 | 3 | 4 | 5;
