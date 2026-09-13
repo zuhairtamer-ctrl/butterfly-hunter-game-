@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename);
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), viteSingleFile()],
+  base: process.env.GITHUB_ACTIONS ? "/butterfly-hunter-game-/" : "/",
   server: {
     host: "0.0.0.0",
     allowedHosts: true,
